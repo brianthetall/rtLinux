@@ -7,14 +7,24 @@
 #include <stdlib.h>
 #include <sys/mman.h>
 #include <time.h>
-
+#define FUDGE 2260 //2.260 us
 void *thread_func(void* data) {
-  struct timespec current_time, last_time, sleep_ts = {0, 000500000};;
+  long calculatedCycleTimeNs, error;
+  long cycleTimeNs = 10000; //10us
+  struct timespec start_time, end_time, last_time, sleep_ts;
   while (1) {
-    clock_gettime(CLOCK_REALTIME, &current_time);
-    printf("Current Time: %ld seconds and %09ld nanoseconds delta=%09ld[ns]\n",
-           current_time.tv_sec, current_time.tv_nsec, current_time.tv_nsec - last_time.tv_nsec);
-    last_time = current_time;
+    clock_gettime(CLOCK_REALTIME, &start_time); //get starting time
+
+    calculatedCycleTimeNs = start_time.tv_nsec - last_time.tv_nsec;
+    error = calculatedCycleTimeNs-cycleTimeNs;
+    printf("Start Time: %ld seconds and %09ld nanoseconds cycleTime=%09ld[ns], error=%05ld[ns]\n",
+           start_time.tv_sec, start_time.tv_nsec, calculatedCycleTimeNs, error );
+    last_time = start_time; //store for next loop's printf()
+
+    clock_gettime(CLOCK_REALTIME, &end_time); //get ending time
+
+    sleep_ts.tv_sec=0;
+    sleep_ts.tv_nsec = cycleTimeNs-FUDGE-(end_time.tv_nsec - start_time.tv_nsec); //write a better difference function that uses the second place?
     nanosleep(&sleep_ts, NULL);
   }
   return NULL;
