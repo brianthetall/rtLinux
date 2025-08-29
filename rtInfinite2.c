@@ -1,0 +1,98 @@
+#define _POSIX_C_SOURCE 200809L
+
+#include <limits.h>
+#include <pthread.h>
+#include <sched.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/mman.h>
+#include <time.h>
+
+void *thread_func(void* data) {
+  struct timespec current_time, last_time, sleep_ts = {0, 000500000};;
+  while (1) {
+    clock_gettime(CLOCK_REALTIME, &current_time);
+    printf("Current Time: %ld seconds and %09ld nanoseconds delta=%09ld[ns]\n",
+           current_time.tv_sec, current_time.tv_nsec, current_time.tv_nsec - last_time.tv_nsec);
+    last_time = current_time;
+    nanosleep(&sleep_ts, NULL);
+  }
+  return NULL;
+}
+
+int main(int argc, char* argv[]) {
+  struct sched_param param;
+  pthread_attr_t attr;
+  pthread_t thread;
+  int ret;
+
+  /* Lock memory */
+  if (mlockall(MCL_CURRENT | MCL_FUTURE) == -1) {
+    printf("mlockall failed: %m\n");
+    exit(-2);
+  }
+
+  /* Initialize pthread attributes (default values) */
+  ret = pthread_attr_init(&attr);
+  if (ret != 0) {
+    printf("init pthread attributes failed\n");
+    goto out;
+  }
+
+  /* Set a specific stack size */
+  ret = pthread_attr_setstacksize(&attr, PTHREAD_STACK_MIN);
+  if (ret != 0) {
+    printf("pthread setstacksize failed\n");
+    goto out;
+  }
+
+  /* Set scheduler policy and priority of pthread */
+  ret = pthread_attr_setschedpolicy(&attr, SCHED_RR); //FIFO);
+  if (ret != 0) {
+    printf("pthread setschedpolicy failed\n");
+    goto out;
+  }
+
+  param.sched_priority = 99; // Highest RT priority
+  ret = pthread_attr_setschedparam(&attr, &param);
+  if (ret != 0) {
+    printf("pthread setschedparam failed\n");
+    goto out;
+  }
+
+  /* Make the thread detached */
+  ret = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+  if (ret != 0) {
+    printf("pthread setdetachstate failed\n");
+    goto out;
+  }
+
+  /* Print the current priority to verify */
+  struct sched_param get_param;
+  pthread_attr_getschedparam(&attr, &get_param);
+  printf("Thread priority: %d\n", get_param.sched_priority);
+
+  /* Create a pthread with specified attributes */
+  ret = pthread_create(&thread, &attr, thread_func, NULL);
+  if (ret != 0) {
+    printf("create pthread failed\n");
+    goto out;
+  }
+
+  /* Join the thread and wait until it is done */
+  ret = pthread_join(thread, NULL);
+  if (ret != 0) {
+    printf("join pthread failed: %m\n");
+  }
+
+  while(1)
+    {
+      struct timespec current_time;
+      struct timespec sleep_ts = {1, 0};
+      clock_gettime(CLOCK_REALTIME, &current_time);
+      nanosleep(&sleep_ts, NULL);
+    }
+
+ out:
+  return ret;
+}
