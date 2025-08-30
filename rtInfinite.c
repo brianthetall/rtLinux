@@ -1,4 +1,4 @@
-#define _POSIX_C_SOURCE 200809L
+#define _POSIX_C_SOURCE 200809L //idk what this does, if anything
 
 #include <limits.h>
 #include <pthread.h>
@@ -7,26 +7,54 @@
 #include <stdlib.h>
 #include <sys/mman.h>
 #include <time.h>
-#define FUDGE 2260 //2.260 us
+
+#define CYCLE_TIME 200000; //200us
+#define MAX_ERROR 40000 //[ns]
+#define TRUE 1
+#define FALSE 0
+
+long calculateDelta( struct timespec start, struct timespec previousStart )
+{
+  long cycleTime = start.tv_nsec - previousStart.tv_nsec;
+  long oneSecond = 1000000000;
+  if( cycleTime < 0 )
+    {
+      //we have jumped a second
+      cycleTime = oneSecond - previousStart.tv_nsec + start.tv_nsec;
+    }  
+  return cycleTime;
+}
+
 void *thread_func(void* data) {
-  long calculatedCycleTimeNs, error;
-  long cycleTimeNs = 10000; //10us
+
+  int passCount = 0;
+  long calculatedCycleTimeNs=0, error=0, maxError=0;
   struct timespec start_time, end_time, last_time, sleep_ts;
+  
   while (1) {
     clock_gettime(CLOCK_REALTIME, &start_time); //get starting time
 
-    calculatedCycleTimeNs = start_time.tv_nsec - last_time.tv_nsec;
-    error = calculatedCycleTimeNs-cycleTimeNs;
-    printf("Start Time: %ld seconds and %09ld nanoseconds cycleTime=%09ld[ns], error=%05ld[ns]\n",
-           start_time.tv_sec, start_time.tv_nsec, calculatedCycleTimeNs, error );
+    calculatedCycleTimeNs = calculateDelta( start_time, last_time );
+    error = calculatedCycleTimeNs-CYCLE_TIME;
+
+    printf("Start Time: %ld seconds and %09ld nanoseconds cycleTime=%09ld[ns], error=%05ld[ns], maxError=%05ld[ns]\n",
+           start_time.tv_sec, start_time.tv_nsec, calculatedCycleTimeNs, error, maxError );
+
+    if( abs(error) >= MAX_ERROR && passCount++>1)
+      {
+	maxError = error > maxError ? error : maxError;
+	//	return NULL; //Kill the program, we did not meet RT constraint.
+      }
+        
     last_time = start_time; //store for next loop's printf()
 
     clock_gettime(CLOCK_REALTIME, &end_time); //get ending time
-
+    
     sleep_ts.tv_sec=0;
-    sleep_ts.tv_nsec = cycleTimeNs-FUDGE-(end_time.tv_nsec - start_time.tv_nsec); //write a better difference function that uses the second place?
+    sleep_ts.tv_nsec = CYCLE_TIME-calculateDelta(end_time, start_time); //write a better difference function that uses the second place?
     nanosleep(&sleep_ts, NULL);
   }
+
   return NULL;
 }
 
@@ -57,7 +85,7 @@ int main(int argc, char* argv[]) {
   }
 
   /* Set scheduler policy and priority of pthread */
-  ret = pthread_attr_setschedpolicy(&attr, SCHED_RR); //FIFO);
+  ret = pthread_attr_setschedpolicy(&attr, SCHED_FIFO); //RR);
   if (ret != 0) {
     printf("pthread setschedpolicy failed\n");
     goto out;
