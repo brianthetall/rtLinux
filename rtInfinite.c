@@ -8,7 +8,7 @@
 #include <sys/mman.h>
 #include <time.h>
 
-#define CYCLE_TIME 200000; //200us
+#define CYCLE_TIME 100000; //100us
 #define MAX_ERROR 40000 //[ns]
 #define TRUE 1
 #define FALSE 0
