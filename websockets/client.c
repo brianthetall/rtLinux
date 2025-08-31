@@ -51,7 +51,7 @@ int main() {
     struct lws_client_connect_info ccinfo = {0};
     ccinfo.context = context;
     ccinfo.address = "localhost";
-    ccinfo.port = 8080;
+    ccinfo.port = 6969;
     ccinfo.path = "/";
     ccinfo.host = lws_canonical_hostname(context);
     ccinfo.origin = "localhost";

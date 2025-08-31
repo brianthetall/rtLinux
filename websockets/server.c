@@ -34,11 +34,14 @@ int main() {
     struct lws_context *context;
 
     memset(&info, 0, sizeof(info));
-    info.port = 8080; // Port number
+    info.vhost_name="127.0.0.1";
+    info.port = 6969; // Port number
     info.protocols = protocols;
+    info.options = LWS_SERVER_OPTION_ALLOW_NON_SSL_ON_SSL_PORT | LWS_SERVER_OPTION_DISABLE_IPV6;
     info.gid = -1;
     info.uid = -1;
 
+    lws_set_log_level(LLL_DEBUG | LLL_INFO | LLL_NOTICE | LLL_WARN | LLL_ERR, NULL);
     context = lws_create_context(&info);
     if (!context) {
         fprintf(stderr, "lws_create_context failed\n");
