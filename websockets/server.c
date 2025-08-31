@@ -8,15 +8,15 @@ static int callback_echo(struct lws *wsi,
 			 void *user, 
 			 void *in, 
 			 size_t len) {
-  printf("Entered Callback function\n");
+  //printf("Entered Callback function\n");
   switch (reason) {
   case LWS_CALLBACK_RECEIVE:
     // Echo the received message back to the client
-    printf("Rx'ed: %s\n", (char*)in);
+    printf("Rx'ed: %.*s Length=%d\n", len, (unsigned char*)in, len);
     lws_write(wsi, in, len, LWS_WRITE_TEXT);
     break;
   default:
-    printf("DEFAULT\n");
+    //printf("DEFAULT\n");
     break;
   }
   return 0;
@@ -44,7 +44,7 @@ int main() {
   info.gid = -1;
   info.uid = -1;
 
-  lws_set_log_level(LLL_DEBUG | LLL_INFO | LLL_NOTICE | LLL_WARN | LLL_ERR, NULL);
+  //lws_set_log_level(LLL_DEBUG | LLL_INFO | LLL_NOTICE | LLL_WARN | LLL_ERR, NULL);
   context = lws_create_context(&info);
   if (!context) {
     fprintf(stderr, "lws_create_context failed\n");

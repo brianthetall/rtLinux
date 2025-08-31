@@ -8,7 +8,7 @@ static int callback_client(struct lws *wsi,
                            void *user, 
                            void *in, 
                            size_t len) {
-  printf("Entered callback function\n");
+  //  printf("Entered callback function\n");
   switch (reason) {
   case LWS_CALLBACK_CLIENT_ESTABLISHED:
     // Send a message once the connection is established
@@ -18,8 +18,9 @@ static int callback_client(struct lws *wsi,
       the send buffer has to have LWS_PRE bytes valid BEFORE the buffer pointer you pass to lws_write().
     */
     unsigned char buf[LWS_PRE + 128];
-    strcpy(&buf[LWS_PRE], "Hello, Server...");
-    lws_write(wsi, &buf[LWS_PRE], strlen("Hello, Server..."), LWS_WRITE_TEXT);
+    memset((void*)buf, 0, LWS_PRE + 128);
+    strcpy(&buf[LWS_PRE], "Sup, Server...1");
+    lws_write(wsi, &buf[LWS_PRE], strlen("Sup, Server...1"), LWS_WRITE_TEXT);
     break;
   case LWS_CALLBACK_CLIENT_RECEIVE:
     // Print the received message
