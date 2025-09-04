@@ -9,7 +9,7 @@
 #include <time.h>
 
 #define CYCLE_TIME 100000; //100us
-#define MAX_ERROR 40000 //[ns]
+#define MAX_ERROR 4000 //[ns]
 #define TRUE 1
 #define FALSE 0
 
