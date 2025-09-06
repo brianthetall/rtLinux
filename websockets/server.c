@@ -3,6 +3,8 @@
 #include <string.h>
 #include <libwebsockets.h>
 
+#define PORT 6969
+
 static int callback_echo(struct lws *wsi, 
 			 enum lws_callback_reasons reason, 
 			 void *user, 
@@ -38,7 +40,7 @@ int main() {
 
   memset(&info, 0, sizeof(info));
   info.vhost_name="127.0.0.1";
-  info.port = 6969; // Port number
+  info.port = PORT; // Port number
   info.protocols = protocols;
   info.options = LWS_SERVER_OPTION_ALLOW_NON_SSL_ON_SSL_PORT | LWS_SERVER_OPTION_DISABLE_IPV6;
   info.gid = -1;
