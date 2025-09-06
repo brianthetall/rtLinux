@@ -12,6 +12,7 @@ make -j4 Image.gz modules dtbs 2>&1 | tee make.log
 
 #Install Kernel Modules:
 sudo make modules_install
+#sudo make install #For non-ARM?
 
 #Copy over the new kernel:
 sudo cp /boot/firmware/kernel_2712.img /boot/firmware/kernel_2712.img-backup.img
