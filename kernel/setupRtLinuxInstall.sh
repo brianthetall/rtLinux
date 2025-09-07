@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cd $1 #linux
+
 #Install Kernel Modules:
 doas make modules_install
 #doas make install #For non-ARM?
