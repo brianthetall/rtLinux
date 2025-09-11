@@ -59,7 +59,6 @@ void *thread_func(void* data) {
     //    printf("ARM Generic Timer [Hz]: %llu Hz Start_Ticks=%llu Prev_Start_Ticks=%llu CycleTime=%lf\n", frequency_hz, start_ticks,prev_start_ticks,timeBetweenCycles);
     printf("ARM Generic Timer [Hz]: %llu Hz  CycleTime=%lf\n", frequency_hz, timeBetweenCycles);
     printf("Elapsed Seconds=%lf Elapsed [us]=%llu SleepTime [us]=%llu\n",elapsed_seconds, elapsed_us, CYCLE_TIME - (elapsed_us*1000));
-        printf("Elapsed Seconds=%lf Elapsed [us]=%llu SleepTime [us]=%llu\n",elapsed_seconds, elapsed_us, CYCLE_TIME - (elapsed_us*1000));    printf("Elapsed Seconds=%lf Elapsed [us]=%llu SleepTime [us]=%llu\n",elapsed_seconds, elapsed_us, CYCLE_TIME - (elapsed_us*1000));    printf("Elapsed Seconds=%lf Elapsed [us]=%llu SleepTime [us]=%llu\n",elapsed_seconds, elapsed_us, CYCLE_TIME - (elapsed_us*1000));    printf("Elapsed Seconds=%lf Elapsed [us]=%llu SleepTime [us]=%llu\n",elapsed_seconds, elapsed_us, CYCLE_TIME - (elapsed_us*1000));    printf("Elapsed Seconds=%lf Elapsed [us]=%llu SleepTime [us]=%llu\n",elapsed_seconds, elapsed_us, CYCLE_TIME - (elapsed_us*1000));    printf("Elapsed Seconds=%lf Elapsed [us]=%llu SleepTime [us]=%llu\n",elapsed_seconds, elapsed_us, CYCLE_TIME - (elapsed_us*1000));
 
     prev_start_ticks=start_ticks;
     end_ticks = get_arm64_virtual_timer(); // Get the ending counter value

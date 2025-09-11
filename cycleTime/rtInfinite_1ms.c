@@ -5,53 +5,78 @@
 #include <sched.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <sys/mman.h>
 #include <time.h>
+//#include <intrin.h> //TSC High Speed Timer
+//#include <cstdint>
 
-#define CYCLE_TIME 1000000; //1ms; 
+#define CYCLE_TIME 1000000 //1[ms]
 #define MAX_ERROR 4000 //[ns]
 #define TRUE 1
 #define FALSE 0
 
-long calculateDelta( struct timespec start, struct timespec previousStart )
-{
-  long cycleTime = start.tv_nsec - previousStart.tv_nsec;
-  long oneSecond = 1000000000;
-  if( cycleTime < 0 )
-    {
-      //we have jumped a second
-      cycleTime = oneSecond - previousStart.tv_nsec + start.tv_nsec;
-    }  
-  return cycleTime;
+// Reads the virtual counter via inline assembly
+static inline uint64_t get_arm64_virtual_timer() {
+    uint64_t timer_value;
+    // mrs (move register from system register) instruction
+    __asm__ volatile("mrs %0, cntvct_el0" : "=r"(timer_value));
+    return timer_value;
+}
+
+// Reads the counter frequency via inline assembly
+static inline uint64_t get_arm64_timer_frequency() {
+    uint64_t frequency;
+    // mrs instruction
+    __asm__ volatile("mrs %0, cntfrq_el0" : "=r"(frequency));
+    return frequency;
 }
 
 void *thread_func(void* data) {
 
   int passCount = 0;
   long calculatedCycleTimeNs=0, error=0, maxError=0;
-  struct timespec start_time, end_time, last_time, sleep_ts;
-  
+  struct timespec sleep_ts;
+  uint64_t frequency_hz=0;
+  uint64_t start_ticks=0, prev_start_ticks=0, end_ticks=0;
+  uint64_t elapsed_ticks=0;
+  uint64_t elapsed_us=0;
+  double elapsed_seconds=0.0;
+  double timeBetweenCycles=0.0;
   while (1) {
-    clock_gettime(CLOCK_REALTIME, &start_time); //get starting time
 
-    calculatedCycleTimeNs = calculateDelta( start_time, last_time );
-    error = calculatedCycleTimeNs-CYCLE_TIME;
+    start_ticks = get_arm64_virtual_timer(); // Get the starting counter value
 
-    printf("Start Time: %ld seconds and %09ld nanoseconds cycleTime=%09ld[ns], error=%05ld[ns], maxError=%05ld[ns]\n",
-           start_time.tv_sec, start_time.tv_nsec, calculatedCycleTimeNs, error, maxError );
+    // Get the timer frequency
+    frequency_hz = get_arm64_timer_frequency();
+    if (frequency_hz == 0) {
+        fprintf(stderr, "Could not get ARM Generic Timer frequency.\n");
+	//   return 1;
+    }
 
-    if( abs(error) >= MAX_ERROR && passCount++>1)
-      {
-	maxError = error > maxError ? error : maxError;
-	//	return NULL; //Kill the program, we did not meet RT constraint.
-      }
-        
-    last_time = start_time; //store for next loop's printf()
+    timeBetweenCycles = (double)(start_ticks - prev_start_ticks) / frequency_hz;
+    
+    //    printf("ARM Generic Timer [Hz]: %llu Hz Start_Ticks=%llu Prev_Start_Ticks=%llu CycleTime=%lf\n", frequency_hz, start_ticks,prev_start_ticks,timeBetweenCycles);
+    printf("ARM Generic Timer [Hz]: %llu Hz  CycleTime=%lf\n", frequency_hz, timeBetweenCycles);
+    printf("Elapsed Seconds=%lf Elapsed [us]=%llu SleepTime [us]=%llu\n",elapsed_seconds, elapsed_us, CYCLE_TIME - (elapsed_us*1000));
+        printf("Elapsed Seconds=%lf Elapsed [us]=%llu SleepTime [us]=%llu\n",elapsed_seconds, elapsed_us, CYCLE_TIME - (elapsed_us*1000));    printf("Elapsed Seconds=%lf Elapsed [us]=%llu SleepTime [us]=%llu\n",elapsed_seconds, elapsed_us, CYCLE_TIME - (elapsed_us*1000));    printf("Elapsed Seconds=%lf Elapsed [us]=%llu SleepTime [us]=%llu\n",elapsed_seconds, elapsed_us, CYCLE_TIME - (elapsed_us*1000));    printf("Elapsed Seconds=%lf Elapsed [us]=%llu SleepTime [us]=%llu\n",elapsed_seconds, elapsed_us, CYCLE_TIME - (elapsed_us*1000));    printf("Elapsed Seconds=%lf Elapsed [us]=%llu SleepTime [us]=%llu\n",elapsed_seconds, elapsed_us, CYCLE_TIME - (elapsed_us*1000));    printf("Elapsed Seconds=%lf Elapsed [us]=%llu SleepTime [us]=%llu\n",elapsed_seconds, elapsed_us, CYCLE_TIME - (elapsed_us*1000));
 
-    clock_gettime(CLOCK_REALTIME, &end_time); //get ending time
+    prev_start_ticks=start_ticks;
+    end_ticks = get_arm64_virtual_timer(); // Get the ending counter value
+
+
+    
+    // Calculate the elapsed ticks
+    elapsed_ticks = end_ticks - start_ticks;
+    
+    // Convert ticks to seconds
+    elapsed_seconds = (double)elapsed_ticks / frequency_hz;
+    elapsed_us = elapsed_seconds * 1000000;
+
+
     
     sleep_ts.tv_sec=0;
-    sleep_ts.tv_nsec = CYCLE_TIME-calculateDelta(end_time, start_time); //write a better difference function that uses the second place?
+    sleep_ts.tv_nsec = CYCLE_TIME - (elapsed_us*1000) - 2000; //2000 is an observed fudge factor
     nanosleep(&sleep_ts, NULL);
   }
 
