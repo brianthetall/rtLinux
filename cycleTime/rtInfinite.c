@@ -1,4 +1,4 @@
-#define _POSIX_C_SOURCE 200809L //idk what this does, if anything
+#define _POSIX_C_SOURCE 200809L
 
 #include <limits.h>
 #include <pthread.h>
@@ -8,11 +8,7 @@
 #include <stdint.h>
 #include <sys/mman.h>
 #include <time.h>
-//#include <intrin.h> //TSC High Speed Timer
-//#include <cstdint>
 
-#define CYCLE_TIME 50000 //100us
-#define MAX_ERROR 4000 //[ns]
 #define TRUE 1
 #define FALSE 0
 
@@ -34,15 +30,18 @@ static inline uint64_t get_arm64_timer_frequency() {
 
 void *thread_func(void* data) {
 
+  int cycleTimeNs = *(int*)data * 1000; //convert from [us] to [ns]
   int passCount = 0, nanosleep_ret = 0;
   long calculatedCycleTimeNs=0, error=0, maxError=0;
   struct timespec sleep_ts, remaining_ts;
   uint64_t frequency_hz=0;
   uint64_t start_ticks=0, prev_start_ticks=0, end_ticks=0;
   uint64_t elapsed_ticks=0;
-  uint64_t elapsed_us=0;
+  uint64_t elapsed_ns=0;
   double elapsed_seconds=0.0;
   double timeBetweenCycles=0.0;
+
+  sleep_ts.tv_sec=0;
   while (1) {
 
     start_ticks = get_arm64_virtual_timer(); // Get the starting counter value
@@ -54,31 +53,26 @@ void *thread_func(void* data) {
 	//   return 1;
     }
 
+    //Calculate the cycle time
     timeBetweenCycles = (double)(start_ticks - prev_start_ticks) / frequency_hz;
-    
-    //    printf("ARM Generic Timer [Hz]: %llu Hz Start_Ticks=%llu Prev_Start_Ticks=%llu CycleTime=%lf\n", frequency_hz, start_ticks,prev_start_ticks,timeBetweenCycles);
-    printf("ARM Generic Timer [Hz]: %llu Hz  CycleTime=%lf\n", frequency_hz, timeBetweenCycles);
-    printf("Elapsed Seconds=%lf Elapsed [us]=%llu SleepTime [us]=%llu\n",elapsed_seconds, elapsed_us, CYCLE_TIME - (elapsed_us*1000));
+
+    printf("ARM Generic Timer [Hz]: %llu Hz  CycleTime=%lf[s]\n", frequency_hz, timeBetweenCycles);
+    printf("Elapsed Seconds=%lf Elapsed [ns]=%llu SleepTime [ns]=%llu\n",elapsed_seconds, elapsed_ns, cycleTimeNs - (elapsed_ns));
 
     prev_start_ticks=start_ticks;
     remaining_ts.tv_sec=0;
     remaining_ts.tv_nsec=0;
-    
-    end_ticks = get_arm64_virtual_timer(); // Get the ending counter value
 
-
+    // Get the ending counter value
+    end_ticks = get_arm64_virtual_timer();
     
     // Calculate the elapsed ticks
     elapsed_ticks = end_ticks - start_ticks;
     
-    // Convert ticks to seconds
-    elapsed_seconds = (double)elapsed_ticks / frequency_hz;
-    elapsed_us = elapsed_seconds * 1000000;
-
-
-    
-    sleep_ts.tv_sec=0;
-    sleep_ts.tv_nsec = CYCLE_TIME - (elapsed_us*1000) - ((double)(get_arm64_virtual_timer() - end_ticks)/frequency_hz)*1000000000 - 3000; //3000; //2000 is an observed fudge factor
+    // Convert ticks to [ns]
+    elapsed_ns = ((double)elapsed_ticks / frequency_hz) * 1000000000;
+      
+    sleep_ts.tv_nsec = cycleTimeNs - elapsed_ns - ((double)(get_arm64_virtual_timer() - end_ticks)/frequency_hz)*1000000000 - 3250; //3000; is an observed fudge factor
     do
       {
 	nanosleep_ret = nanosleep(&sleep_ts, &remaining_ts);
@@ -93,7 +87,17 @@ int main(int argc, char* argv[]) {
   struct sched_param param;
   pthread_attr_t attr;
   pthread_t thread;
-  int ret;
+  int ret, cycleTime;
+  if(argc != 2)
+    {
+      printf("Must pass cycleTime in [us]\n");
+      exit(-3);
+    }
+  else
+    {
+      cycleTime = atoi( argv[1] );
+      printf("CycleTime[us]=%ld\n", cycleTime);
+    }
 
   /* Lock memory */
   if (mlockall(MCL_CURRENT | MCL_FUTURE) == -1) {
@@ -142,7 +146,7 @@ int main(int argc, char* argv[]) {
   printf("Thread priority: %d\n", get_param.sched_priority);
 
   /* Create a pthread with specified attributes */
-  ret = pthread_create(&thread, &attr, thread_func, NULL);
+  ret = pthread_create(&thread, &attr, thread_func, &cycleTime);
   if (ret != 0) {
     printf("create pthread failed\n");
     goto out;
