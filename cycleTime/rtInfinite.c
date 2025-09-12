@@ -34,9 +34,9 @@ static inline uint64_t get_arm64_timer_frequency() {
 
 void *thread_func(void* data) {
 
-  int passCount = 0;
+  int passCount = 0, nanosleep_ret = 0;
   long calculatedCycleTimeNs=0, error=0, maxError=0;
-  struct timespec sleep_ts;
+  struct timespec sleep_ts, remaining_ts;
   uint64_t frequency_hz=0;
   uint64_t start_ticks=0, prev_start_ticks=0, end_ticks=0;
   uint64_t elapsed_ticks=0;
@@ -61,6 +61,9 @@ void *thread_func(void* data) {
     printf("Elapsed Seconds=%lf Elapsed [us]=%llu SleepTime [us]=%llu\n",elapsed_seconds, elapsed_us, CYCLE_TIME - (elapsed_us*1000));
 
     prev_start_ticks=start_ticks;
+    remaining_ts.tv_sec=0;
+    remaining_ts.tv_nsec=0;
+    
     end_ticks = get_arm64_virtual_timer(); // Get the ending counter value
 
 
@@ -75,8 +78,12 @@ void *thread_func(void* data) {
 
     
     sleep_ts.tv_sec=0;
-    sleep_ts.tv_nsec = CYCLE_TIME - (elapsed_us*1000) - 2000; //2000 is an observed fudge factor
-    nanosleep(&sleep_ts, NULL);
+    sleep_ts.tv_nsec = CYCLE_TIME - (elapsed_us*1000) - ((double)(get_arm64_virtual_timer() - end_ticks)/frequency_hz)*1000000000 - 3000; //3000; //2000 is an observed fudge factor
+    do
+      {
+	nanosleep_ret = nanosleep(&sleep_ts, &remaining_ts);
+      }while( nanosleep_ret != 0 );
+    
   }
 
   return NULL;
