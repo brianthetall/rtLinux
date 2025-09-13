@@ -72,7 +72,7 @@ void *thread_func(void* data) {
     // Convert ticks to [ns]
     elapsed_ns = ((double)elapsed_ticks / frequency_hz) * 1000000000;
       
-    sleep_ts.tv_nsec = cycleTimeNs - elapsed_ns - ((double)(get_arm64_virtual_timer() - end_ticks)/frequency_hz)*1000000000 - 3250; //3000; is an observed fudge factor
+    sleep_ts.tv_nsec = cycleTimeNs - elapsed_ns - ((double)(get_arm64_virtual_timer() - end_ticks)/frequency_hz)*1000000000 - 2000; //3000; is an observed fudge factor
     do
       {
 	nanosleep_ret = nanosleep(&sleep_ts, &remaining_ts);
