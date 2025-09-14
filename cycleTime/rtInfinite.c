@@ -1,6 +1,8 @@
 #define _POSIX_C_SOURCE 200809L
 
-#include "print.h" //user program
+#include "armTimer.h"
+#include "userPrograms/pid.h" //control PID loop
+#include "userPrograms/print.h" //user program
 #include <limits.h>
 #include <pthread.h>
 #include <sched.h>
@@ -12,22 +14,6 @@
 
 #define TRUE 1
 #define FALSE 0
-
-// Reads the virtual counter via inline assembly
-static inline uint64_t get_arm64_virtual_timer() {
-    uint64_t timer_value;
-    // mrs (move register from system register) instruction
-    __asm__ volatile("mrs %0, cntvct_el0" : "=r"(timer_value));
-    return timer_value;
-}
-
-// Reads the counter frequency via inline assembly
-static inline uint64_t get_arm64_timer_frequency() {
-    uint64_t frequency;
-    // mrs instruction
-    __asm__ volatile("mrs %0, cntfrq_el0" : "=r"(frequency));
-    return frequency;
-}
 
 void *thread_func(void* data) {
 
@@ -43,6 +29,15 @@ void *thread_func(void* data) {
   double timeBetweenCycles=0.0;
   int (*userAdd)(int,int) = &addition; //function pointer to user-function
   sleep_ts.tv_sec=0;
+
+  PIDConfig pidCfg;
+  pidCfg.setpoint = 0;
+  pidCfg.Kp = 10.0;
+  pidCfg.Ki = 1.0;
+  pidCfg.Kd = 0.0; //disable the D term
+  double pid_output = 0.0;
+  char buffer[128];
+  
   while (1) {
 
     start_ticks = get_arm64_virtual_timer(); // Get the starting counter value
@@ -67,7 +62,8 @@ void *thread_func(void* data) {
 
     /**************EXECUTE-USER-FUNCTIONS**********************************/
     printf("UserAdd 60+9=%d\n",userAdd(60,9));
-
+    pid_control(&pidCfg,/*getProcessValue()*/ 10.0, &pid_output);
+    printf("PID: %s, Output:%lf\n", pid_toString(&pidCfg, &buffer[0]), pid_output);
     /**************End-EXECUTE-USER-FUNCTIONS******************************/
     
 

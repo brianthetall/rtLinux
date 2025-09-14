@@ -29,16 +29,16 @@ tmux select-layout -t "$session_name:dev-env" tiled
 
 # Send a different command to each pane (optional)
 # Send command to pane 0 (top-left)
-tmux send-keys -t "$session_name:dev-env.0" './gogoGaget.sh 99 bin/rtInfinite 100' C-m
+tmux send-keys -t "$session_name:dev-env.0" './gogoGaget.sh 99 bin/rtInfinite 200' C-m
 
 # Send command to pane 1 (top-right)
-tmux send-keys -t "$session_name:dev-env.1" './gogoGaget.sh 98 bin/rtInfinite 250' C-m
+tmux send-keys -t "$session_name:dev-env.1" './gogoGaget.sh 98 bin/rtInfinite 333' C-m
 
 # Send command to pane 2 (bottom-left)
 tmux send-keys -t "$session_name:dev-env.2" './gogoGaget.sh 97 bin/rtInfinite 500' C-m
 
 # Send command to pane 3 (bottom-right)
-tmux send-keys -t "$session_name:dev-env.3" './gogoGaget.sh 96 bin/rtInfinite 1200' C-m
+tmux send-keys -t "$session_name:dev-env.3" './gogoGaget.sh 96 bin/rtInfinite 1700' C-m
 
 # Attach to the tmux session
 tmux attach-session -t $session_name
