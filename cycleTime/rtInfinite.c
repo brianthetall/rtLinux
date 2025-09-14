@@ -1,5 +1,6 @@
 #define _POSIX_C_SOURCE 200809L
 
+#include "print.h" //user program
 #include <limits.h>
 #include <pthread.h>
 #include <sched.h>
@@ -40,7 +41,7 @@ void *thread_func(void* data) {
   uint64_t elapsed_ns=0;
   double elapsed_seconds=0.0;
   double timeBetweenCycles=0.0;
-
+  int (*userAdd)(int,int) = &addition; //function pointer to user-function
   sleep_ts.tv_sec=0;
   while (1) {
 
@@ -62,6 +63,13 @@ void *thread_func(void* data) {
     prev_start_ticks=start_ticks;
     remaining_ts.tv_sec=0;
     remaining_ts.tv_nsec=0;
+
+
+    /**************EXECUTE-USER-FUNCTIONS**********************************/
+    printf("UserAdd 60+9=%d\n",userAdd(60,9));
+
+    /**************End-EXECUTE-USER-FUNCTIONS******************************/
+    
 
     // Get the ending counter value
     end_ticks = get_arm64_virtual_timer();
