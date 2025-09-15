@@ -36,15 +36,15 @@ void *thread_func(void* data) {
   PIDConfig pidCfg;
   pidCfg.setpoint = 120.0;
   pidCfg.Kp = 10.0;
-  pidCfg.Ki = 1.0;
+  pidCfg.Ki = 0.0;
   pidCfg.Kd = 0.0; //disable the D term
   double pid_output = 0.0;
   char buffer[128]; //use to get status of PID
 
   //Waveform Configuration:
   SineConfig sineCfg;
-  sineCfg.frequency = 1; //Hz
-  sineCfg.amplitude = 1000; //-amplitude <-> amplitude
+  sineCfg.frequency = 0.01; //Hz
+  sineCfg.amplitude = 140; //-amplitude <-> amplitude
   sineCfg.phase_shift = 0.0;
   sineCfg.sampling_rate = 1.0/cycleTimeSec;
   printf("sampleRate=%lf",sineCfg.sampling_rate);
