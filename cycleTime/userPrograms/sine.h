@@ -18,18 +18,21 @@ typedef struct
 
 double sine(SineConfig* const cfg)
 {
+  const double pi2 = (double)2*PI;
   // Calculate the angle increment per sample
   double angle_increment = (2 * PI * cfg->frequency) / cfg->sampling_rate;
-  printf("AngleIncrement = %lf\n",angle_increment);
+  printf("[const]AngleIncrement = %lf\n",angle_increment);
 
   // Update the angle for the next sample
-  cfg->angle += angle_increment;
+  cfg->angle += angle_increment + cfg->phase_shift;
+  //cfg->angle = fmod(cfg->angle, (double)2*PI);
   printf("Calculated Angle = %lf\n",cfg->angle);
   
   // Generate the sine wave value
-  printf("sine(%lf)\n",cfg->angle + cfg->phase_shift);
-  double calcuated_angle = fmod(cfg->angle + cfg->phase_shift, 2 * PI);
+  double calcuated_angle = fmod(cfg->angle, pi2);
   printf("calculated_angle=%lf",calcuated_angle);
+
+  //Factor in the Amplitude:
   double sine_value = cfg->amplitude * sin(calcuated_angle);
 
   // Print the generated sine wave value

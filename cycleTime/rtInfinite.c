@@ -43,10 +43,11 @@ void *thread_func(void* data) {
 
   //Waveform Configuration:
   SineConfig sineCfg;
-  sineCfg.frequency = 1000; //Hz
+  sineCfg.frequency = 1; //Hz
   sineCfg.amplitude = 1000; //-amplitude <-> amplitude
   sineCfg.phase_shift = 0.0;
   sineCfg.sampling_rate = 1.0/cycleTimeSec;
+  printf("sampleRate=%lf",sineCfg.sampling_rate);
   sineCfg.angle = 0.0; //initial phase-angle
   
   while (1) {
@@ -72,7 +73,7 @@ void *thread_func(void* data) {
 
 
     /**************EXECUTE-USER-FUNCTIONS**********************************/
-    printf("UserAdd 60+9=%d\n",userAdd(60,9));
+    //printf("UserAdd 60+9=%d\n",userAdd(60,9));
     pid_control(&pidCfg, sine(&sineCfg), &pid_output);
     printf("PID: %s, Output:%lf\n", pid_toString(&pidCfg, &buffer[0]), pid_output);
     /**************End-EXECUTE-USER-FUNCTIONS******************************/
