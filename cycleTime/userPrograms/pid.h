@@ -50,7 +50,7 @@ void pid_control(const PIDConfig *config, double current_value, double *output) 
     last_update = current_time;
 }
 
-char* pid_toString( PIDConfig *cfg, char *buffer )
+char* pid_toString( const PIDConfig * const cfg, char * const buffer )
 {
   sprintf( buffer,
 	   "Kp=%f, Ki=%f, Kd=%f, Setpoint=%lf",

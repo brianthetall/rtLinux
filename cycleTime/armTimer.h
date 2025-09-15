@@ -1,10 +1,10 @@
 #ifndef __ARM_TMR__
 #define __ARM_TMR__
 
-#include <limits.h>
-#include <sched.h>
-#include <stdio.h>
-#include <stdlib.h>
+//#include <limits.h>
+//#include <sched.h>
+//#include <stdio.h>
+//#include <stdlib.h>
 #include <stdint.h>
 #include <sys/mman.h>
 #include <time.h>

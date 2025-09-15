@@ -18,9 +18,9 @@
 void *thread_func(void* data) {
 
   int cycleTimeNs = *(int*)data * 1000; //convert from [us] to [ns]
-  int passCount = 0, nanosleep_ret = 0;
-  long calculatedCycleTimeNs=0, error=0, maxError=0;
-  struct timespec sleep_ts, remaining_ts;
+  int nanosleep_ret = 0;
+  long calculatedCycleTimeNs=0;
+  struct timespec sleep_ts, remaining_ts; //time to sleep, and remaining time to sleep if interrupted.
   uint64_t frequency_hz=0;
   uint64_t start_ticks=0, prev_start_ticks=0, end_ticks=0;
   uint64_t elapsed_ticks=0;
@@ -30,13 +30,14 @@ void *thread_func(void* data) {
   int (*userAdd)(int,int) = &addition; //function pointer to user-function
   sleep_ts.tv_sec=0;
 
+  //PID Configuration:
   PIDConfig pidCfg;
-  pidCfg.setpoint = 0;
+  pidCfg.setpoint = 120.0;
   pidCfg.Kp = 10.0;
   pidCfg.Ki = 1.0;
   pidCfg.Kd = 0.0; //disable the D term
   double pid_output = 0.0;
-  char buffer[128];
+  char buffer[128]; //use to get status of PID
   
   while (1) {
 
@@ -46,7 +47,7 @@ void *thread_func(void* data) {
     frequency_hz = get_arm64_timer_frequency();
     if (frequency_hz == 0) {
         fprintf(stderr, "Could not get ARM Generic Timer frequency.\n");
-	//   return 1;
+	exit(1); //Show stopper!
     }
 
     //Calculate the cycle time
