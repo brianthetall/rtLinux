@@ -1,6 +1,7 @@
 #define _POSIX_C_SOURCE 200809L
 
 #include "armTimer.h"
+#include "userPrograms/sine.h" //Waveform Generator
 #include "userPrograms/pid.h" //control PID loop
 #include "userPrograms/print.h" //user program
 #include <limits.h>
@@ -18,6 +19,7 @@
 void *thread_func(void* data) {
 
   int cycleTimeNs = *(int*)data * 1000; //convert from [us] to [ns]
+  double cycleTimeSec = (double)cycleTimeNs/1000000000;
   int nanosleep_ret = 0;
   long calculatedCycleTimeNs=0;
   struct timespec sleep_ts, remaining_ts; //time to sleep, and remaining time to sleep if interrupted.
@@ -38,6 +40,14 @@ void *thread_func(void* data) {
   pidCfg.Kd = 0.0; //disable the D term
   double pid_output = 0.0;
   char buffer[128]; //use to get status of PID
+
+  //Waveform Configuration:
+  SineConfig sineCfg;
+  sineCfg.frequency = 1000; //Hz
+  sineCfg.amplitude = 1000; //-amplitude <-> amplitude
+  sineCfg.phase_shift = 0.0;
+  sineCfg.sampling_rate = 1.0/cycleTimeSec;
+  sineCfg.angle = 0.0; //initial phase-angle
   
   while (1) {
 
@@ -53,8 +63,8 @@ void *thread_func(void* data) {
     //Calculate the cycle time
     timeBetweenCycles = (double)(start_ticks - prev_start_ticks) / frequency_hz;
 
-    printf("ARM Generic Timer [Hz]: %llu Hz  CycleTime=%lf[s]\n", frequency_hz, timeBetweenCycles);
-    printf("Elapsed Seconds=%lf Elapsed [ns]=%llu SleepTime [ns]=%llu\n",elapsed_seconds, elapsed_ns, cycleTimeNs - (elapsed_ns));
+    printf("CycleTime=%lf[s]\n", frequency_hz, timeBetweenCycles);
+    printf("Elapsed Seconds=%llf Elapsed [ns]=%llu SleepTime [ns]=%llu\n",elapsed_seconds, elapsed_ns, cycleTimeNs - (elapsed_ns));
 
     prev_start_ticks=start_ticks;
     remaining_ts.tv_sec=0;
@@ -63,7 +73,7 @@ void *thread_func(void* data) {
 
     /**************EXECUTE-USER-FUNCTIONS**********************************/
     printf("UserAdd 60+9=%d\n",userAdd(60,9));
-    pid_control(&pidCfg,/*getProcessValue()*/ 10.0, &pid_output);
+    pid_control(&pidCfg, sine(&sineCfg), &pid_output);
     printf("PID: %s, Output:%lf\n", pid_toString(&pidCfg, &buffer[0]), pid_output);
     /**************End-EXECUTE-USER-FUNCTIONS******************************/
     

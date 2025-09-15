@@ -1,3 +1,3 @@
 #!/bin/bash
 
-gcc rtInfinite.c -o ../bin/rtInfinite -pthread
+gcc rtInfinite.c -o ../bin/rtInfinite -pthread -lm
