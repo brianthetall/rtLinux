@@ -9,6 +9,7 @@
 #include <pthread.h>
 #include <sched.h>
 #include <iostream>
+#include <iomanip>
 //#include <chrono>
 #include <stdlib.h>
 #include <stdint.h>
@@ -36,7 +37,6 @@ public:
     uint64_t start_ticks=0, prev_start_ticks=0, end_ticks=0;
     uint64_t elapsed_ticks=0;
     uint64_t elapsed_ns=0;
-    double elapsed_seconds=0.0;
     double timeBetweenCycles=0.0;
     int (*userAdd)(int,int) = &addition; //function pointer to user-function
     sleep_ts.tv_sec=0;
@@ -74,8 +74,9 @@ public:
       //Calculate the cycle time
       timeBetweenCycles = (double)(start_ticks - prev_start_ticks) / frequency_hz;
 
-      std::cout << "CycleTime=" << frequency_hz << " " << timeBetweenCycles << "[s]" << std::endl;
-      std::cout << "Elapsed Seconds=" << elapsed_seconds << "Elapsed [ns]=" << elapsed_ns << "SleepTime [ns]=" << cycleTimeNs - (elapsed_ns) << std::endl;
+      std::cout << std::fixed << std::setprecision(9) << std::showpoint;
+      std::cout << "CycleTime=" << timeBetweenCycles << "[s]" << std::endl;
+      std::cout << "Elapsed [ns]=" << elapsed_ns << std::endl << "SleepTime [ns]=" << cycleTimeNs - (elapsed_ns) << std::endl;
 
       prev_start_ticks=start_ticks;
       remaining_ts.tv_sec=0;
@@ -85,7 +86,7 @@ public:
       /**************EXECUTE-USER-FUNCTIONS**********************************/
       //printf("UserAdd 60+9=%d\n",userAdd(60,9));
       pid_control(&pidCfg, sine(&sineCfg), &pid_output);
-      std::cout << "PID: " << pid_toString(&pidCfg, &buffer[0]) << "Output:" << pid_output << std::endl;
+      std::cout << "PID: " << pid_toString(&pidCfg, &buffer[0]) << " Output:" << pid_output << std::endl << std::endl;
       /**************End-EXECUTE-USER-FUNCTIONS******************************/
     
       // Get the ending counter value
