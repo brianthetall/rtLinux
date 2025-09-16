@@ -2,15 +2,13 @@
 
 #include "armTimer.h"
 #include "userPrograms/sine.h" //Waveform Generator
-#include "userPrograms/pid.h" //control PID loop
+#include "userPrograms/pid.hpp" //control PID loop
 #include "userPrograms/print.h" //user program
 #include <limits.h>
-//#include <thread>
 #include <pthread.h>
 #include <sched.h>
 #include <iostream>
 #include <iomanip>
-//#include <chrono>
 #include <stdlib.h>
 #include <stdint.h>
 #include <sys/mman.h>
@@ -18,8 +16,6 @@
 
 #define TRUE 1
 #define FALSE 0
-
-//using namespace std;
 
 class RtInfinite
 {
