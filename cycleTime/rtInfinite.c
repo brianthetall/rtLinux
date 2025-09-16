@@ -35,7 +35,7 @@ void *thread_func(void* data) {
   //PID Configuration:
   PIDConfig pidCfg;
   pidCfg.setpoint = 120.0;
-  pidCfg.Kp = 10.0;
+  pidCfg.Kp = 1.0;
   pidCfg.Ki = 0.0;
   pidCfg.Kd = 0.0; //disable the D term
   double pid_output = 0.0;
@@ -43,12 +43,13 @@ void *thread_func(void* data) {
 
   //Waveform Configuration:
   SineConfig sineCfg;
-  sineCfg.frequency = 0.01; //Hz
+  sineCfg.frequency = 0.10; //Hz
   sineCfg.amplitude = 140; //-amplitude <-> amplitude
   sineCfg.phase_shift = 0.0;
   sineCfg.sampling_rate = 1.0/cycleTimeSec;
   printf("sampleRate=%lf",sineCfg.sampling_rate);
   sineCfg.angle = 0.0; //initial phase-angle
+  sineCfg.offset = sineCfg.amplitude; //0 <-> 2*amplitude
   
   while (1) {
 
