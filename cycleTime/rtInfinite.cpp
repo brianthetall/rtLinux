@@ -1,7 +1,7 @@
 #define _POSIX_C_SOURCE 200809L
 
 #include "armTimer.h"
-#include "userPrograms/sine.h" //Waveform Generator
+#include "userPrograms/sine.hpp" //Waveform Generator
 #include "userPrograms/pid.hpp" //control PID loop
 #include "userPrograms/print.h" //user program
 #include <limits.h>
@@ -37,24 +37,8 @@ public:
     int (*userAdd)(int,int) = &addition; //function pointer to user-function
     sleep_ts.tv_sec=0;
 
-    //PID Configuration:
-    PIDConfig pidCfg;
-    pidCfg.setpoint = 120.0;
-    pidCfg.Kp = 1.0;
-    pidCfg.Ki = 0.0;
-    pidCfg.Kd = 0.0; //disable the D term
-    double pid_output = 0.0;
-    char buffer[128]; //use to get status of PID
-
-    //Waveform Configuration:
-    SineConfig sineCfg;
-    sineCfg.frequency = 0.10; //Hz
-    sineCfg.amplitude = 140; //-amplitude <-> amplitude
-    sineCfg.phase_shift = 0.0;
-    sineCfg.sampling_rate = 1.0/cycleTimeSec;
-    printf("sampleRate=%lf",sineCfg.sampling_rate);
-    sineCfg.angle = 0.0; //initial phase-angle
-    sineCfg.offset = sineCfg.amplitude; //0 <-> 2*amplitude
+    Pid pid(1.0, 0.0, 0.0); //Kp,Ki,Kd
+    Sine sineGenerator(0.10, 140, 0.0, 1.0/cycleTimeSec, 140); //Waveform Configuration:
   
     while (1) {
 
@@ -81,8 +65,9 @@ public:
 
       /**************EXECUTE-USER-FUNCTIONS**********************************/
       //printf("UserAdd 60+9=%d\n",userAdd(60,9));
-      pid_control(&pidCfg, sine(&sineCfg), &pid_output);
-      std::cout << "PID: " << pid_toString(&pidCfg, &buffer[0]) << " Output:" << pid_output << std::endl << std::endl;
+      
+      std::cout << "PID: " << pid.pid_toString() <<
+	" Output:" << pid.pid_control(sineGenerator.next()) << std::endl << std::endl;
       /**************End-EXECUTE-USER-FUNCTIONS******************************/
     
       // Get the ending counter value

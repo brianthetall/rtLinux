@@ -3,6 +3,8 @@
 
 #include "../armTimer.h"
 #include <iostream>
+#include <string>
+#include <string.h> //memset
 
 class Pid
 {
@@ -29,9 +31,9 @@ public:
     output = 0.0;
   }
 
-  Pid(double setpoint, double Kp, double Ki, double Kd)
+  Pid(double Kp, double Ki, double Kd)
   {
-    cfg.setpoint = setpoint;
+    cfg.setpoint = 0.0;
     cfg.Kp = Kp;
     cfg.Ki = Ki;
     cfg.Kd = Kd;
@@ -86,15 +88,15 @@ public:
     double error = this->cfg.setpoint - current_process_value;
 
     // Calculate control terms
-    *output = this->cfg.Kp * error 
+    this->output = this->cfg.Kp * error 
       + this->cfg.Ki * integral * dt 
       + this->cfg.Kd * (error - previous_error) / dt;
-
+    
     // Apply output limits to prevent actuator saturation
-    if (*output > 100.0) {
-      *output = 100.0;
-    } else if (*output < -100.0) {
-      *output = -100.0;
+    if (this->output > 100.0) {
+      this->output = 100.0;
+    } else if (this->output < -100.0) {
+      this->output = -100.0;
     }
 
     // Update integral and previous_error for next iteration
@@ -107,12 +109,34 @@ public:
     return output;
   }
 
-  char* pid_toString( const PIDConfig * const cfg, char * const buffer )
+  std::string pid_toString(void)
   {
-    sprintf( buffer,
-	     "Kp=%f, Ki=%f, Kd=%f, Setpoint=%lf",
-	     cfg->Kp, cfg->Ki, cfg->Kd, cfg->setpoint);
-    return buffer;
+    char doubleBuf[32]; //use snprintf
+    std::string retval;
+    retval.reserve(128); //don't reallocate on every +=
+
+    //read the doubles
+    retval="Kp=";
+    memset(doubleBuf, 0, sizeof(doubleBuf));
+    snprintf(doubleBuf, sizeof(doubleBuf), "%.3f", this->cfg.Kp);
+    retval+=doubleBuf; //Kp
+
+    retval+=" Ki=";
+    memset(doubleBuf, 0, sizeof(doubleBuf));
+    snprintf(doubleBuf, sizeof(doubleBuf), "%.3f", this->cfg.Ki);
+    retval+=doubleBuf; //Ki
+
+    retval+=" Kd=";
+    memset(doubleBuf, 0, sizeof(doubleBuf));
+    snprintf(doubleBuf, sizeof(doubleBuf), "%.3f", this->cfg.Kd);
+    retval+=doubleBuf; //Kd
+
+    retval+=" Setpoint=";
+    memset(doubleBuf, 0, sizeof(doubleBuf));
+    snprintf(doubleBuf, sizeof(doubleBuf), "%.3lf", this->cfg.setpoint);
+    retval+=doubleBuf; //Setpoint
+
+    return retval;
   }
   
 };
