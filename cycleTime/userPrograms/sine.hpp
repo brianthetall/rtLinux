@@ -11,30 +11,32 @@ class Sine : public FunctionGenerator
 {
 private:
   const double pi2 = (double)2*M_PI;
+  double angle_increment;
   
 public:
   Sine() = default;
   Sine(double frequency, double amplitude, double phase_shift, double sampling_rate, double offset):FunctionGenerator(frequency,amplitude,phase_shift,sampling_rate,offset)
-  {}
+  {
+    // Calculate the angle increment per sample
+    this->angle_increment = (2 * M_PI * this->getFrequency()) / this->getSampleRate();
+    this->output = 0.0;
+  }
 
-  double next(void)
+  virtual double next(void)
   {
 
-    // Calculate the angle increment per sample
-    double angle_increment = (2 * M_PI * this->getFrequency()) / this->getSampleRate();
-
-    // Update the angle for the next sample
-    this->angle += angle_increment + this->phase_shift;
-    this->angle = fmod(this->angle, (double)2*M_PI); //keep the angle [0,2pi)
+    // Update the output for the next sample
+    this->output += angle_increment + this->phase_shift;
+    this->output = fmod(this->output, (double)2*M_PI); //keep the output [0,2pi)
   
     // Generate the sine wave value
     // Factor in the Amplitude & DC offset:
-    return this->amplitude * sin(this->angle) + this->offset;;      
+    return this->amplitude * sin(this->output) + this->offset;;      
   }
 
-  void reset(void)
+  virtual void reset(void)
   {
-    this->angle = 0.0; //reset the calculated angle
+    this->output = 0.0; //reset the calculated output
   }
   
   virtual double getSampleRate(void) const{ return this->sampling_rate; }

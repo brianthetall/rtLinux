@@ -13,7 +13,7 @@ protected:
   double sampling_rate;
   double offset; //DC offset
 
-  double angle; //calculated phase angle
+  double output; //calculated output phase; pre-amplitude & DC-offset
 
 public:
 
