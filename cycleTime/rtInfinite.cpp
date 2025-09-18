@@ -13,6 +13,7 @@
 #include <stdint.h>
 #include <sys/mman.h>
 #include <time.h>
+#include <memory>
 
 #define TRUE 1
 #define FALSE 0
@@ -38,7 +39,7 @@ public:
     sleep_ts.tv_sec=0;
 
     Pid pid(1.0, 0.0, 0.0); //Kp,Ki,Kd
-    Sine sineGenerator(0.10, 140, 0.0, 1.0/cycleTimeSec, 140); //Waveform Configuration:
+    std::shared_ptr<FunctionGenerator>generator = std::make_shared<Sine>(0.10, 140, 0.0, 1.0/cycleTimeSec, 140); //Waveform Configuration:
   
     while (1) {
 
@@ -65,9 +66,9 @@ public:
 
       /**************EXECUTE-USER-FUNCTIONS**********************************/
       //printf("UserAdd 60+9=%d\n",userAdd(60,9));
-      
-      std::cout << "PID: " << pid.pid_toString() <<
-	" Output:" << pid.pid_control(sineGenerator.next()) << std::endl << std::endl;
+      double signal = generator->next();
+      std::cout << "PID: " << pid.pid_toString() << " Signal=" << signal <<
+	" Output:" << pid.pid_control(signal) << std::endl << std::endl;
       /**************End-EXECUTE-USER-FUNCTIONS******************************/
     
       // Get the ending counter value

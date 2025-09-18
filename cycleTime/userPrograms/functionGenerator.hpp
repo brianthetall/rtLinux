@@ -4,8 +4,6 @@
 #include <cmath>
 #include <cstddef>   // for std::size_t
 
-/// \brief  Abstract base class for all function generators.
-///
 class FunctionGenerator
 {
 protected:

@@ -22,24 +22,14 @@ public:
 
     // Calculate the angle increment per sample
     double angle_increment = (2 * M_PI * this->getFrequency()) / this->getSampleRate();
-    //printf("[const]AngleIncrement = %lf\n",angle_increment);
 
     // Update the angle for the next sample
     this->angle += angle_increment + this->phase_shift;
-    this->angle = fmod(this->angle, (double)2*M_PI);
-    //printf("Calculated Angle = %lf\n",this->angle);
+    this->angle = fmod(this->angle, (double)2*M_PI); //keep the angle [0,2pi)
   
     // Generate the sine wave value
-    //double calcuated_angle = fmod(this->angle, pi2);
-    //printf("calculated_angle=%lf",calcuated_angle);
-
-    //Factor in the Amplitude:
-    double sine_value = this->amplitude * sin(this->angle) + this->offset;
-
-    // Print the generated sine wave value
-    //    printf("Sine Wave Value: %.6f\n", sine_value);
-    
-    return sine_value;      
+    // Factor in the Amplitude & DC offset:
+    return this->amplitude * sin(this->angle) + this->offset;;      
   }
 
   void reset(void)
