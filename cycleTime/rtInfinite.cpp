@@ -3,6 +3,7 @@
 #include "armTimer.h"
 #include "userPrograms/sine.hpp" //Waveform Generator
 #include "userPrograms/ramp.hpp" //Waveform Generator
+#include "userPrograms/square.hpp" //Waveform Generator
 #include "userPrograms/pid.hpp" //control PID loop
 #include "userPrograms/print.h" //user program
 #include <limits.h>
@@ -40,7 +41,7 @@ public:
     sleep_ts.tv_sec=0;
 
     Pid pid(1.0, 0.0, 0.0); //Kp,Ki,Kd
-    std::shared_ptr<FunctionGenerator>generator = std::make_shared<Ramp>(0.10, 140, 0.0, 1.0/cycleTimeSec, 0); //Waveform Configuration:
+    std::shared_ptr<FunctionGenerator>generator = std::make_shared<Square>(0.10, 140, 0.0, 1.0/cycleTimeSec, 0); //Waveform Configuration:
   
     while (1) {
 
