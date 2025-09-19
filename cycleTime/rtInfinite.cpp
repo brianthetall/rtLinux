@@ -44,7 +44,7 @@ public:
     int (*userAdd)(int,int) = &addition; //function pointer to user-function
     sleep_ts.tv_sec=0;
 
-    Pid cycleTimeFudgePid(0.5, 0.0000000001, 0);
+    Pid cycleTimeFudgePid(0.4, 0.00000000005, 0);
     Pid pid(1.0, 0.0, 0.0); //Kp,Ki,Kd
     std::shared_ptr<FunctionGenerator>generator = std::make_shared<Sine>(0.10, 140, 0.0, 1.0/cycleTimeSec, 0); //Waveform Configuration:
   

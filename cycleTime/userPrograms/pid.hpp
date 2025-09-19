@@ -90,7 +90,7 @@ public:
 
     // Calculate control terms
     this->output = this->cfg.Kp * error 
-      + this->cfg.Ki * integral * dt 
+      + this->cfg.Ki * integral * dt
       + this->cfg.Kd * (error - previous_error) / dt;
 
     std::cout<<"Integral="<<this->cfg.Ki * integral * dt <<std::endl;
