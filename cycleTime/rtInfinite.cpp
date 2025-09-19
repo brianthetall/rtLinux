@@ -46,7 +46,7 @@ public:
 
     double fudge=0.0;
     int64_t fudgeInt=0;
-    Pid cycleTimeFudgePid(0.4, static_cast<double>(0.14), 0);
+    Pid cycleTimeFudgePid(0.4, static_cast<double>(0.14), 0.00000014);
     cycleTimeFudgePid.setSetpoint(cycleTimeSec);
     
     Pid pid(1.0, 0.0, 0.0); //Kp,Ki,Kd
