@@ -22,6 +22,7 @@
 
 class RtInfinite
 {
+  
 public:
   RtInfinite() = default; //default constructor
 
@@ -37,11 +38,13 @@ public:
     uint64_t elapsed_ticks=0;
     uint64_t elapsed_ns=0;
     double timeBetweenCycles=0.0;
+    uint64_t timeBetweenCyclesNs=0;
+    
     int (*userAdd)(int,int) = &addition; //function pointer to user-function
     sleep_ts.tv_sec=0;
 
     Pid pid(1.0, 0.0, 0.0); //Kp,Ki,Kd
-    std::shared_ptr<FunctionGenerator>generator = std::make_shared<Square>(0.10, 140, 0.0, 1.0/cycleTimeSec, 0); //Waveform Configuration:
+    std::shared_ptr<FunctionGenerator>generator = std::make_shared<Sine>(0.10, 140, 0.0, 1.0/cycleTimeSec, 0); //Waveform Configuration:
   
     while (1) {
 
@@ -56,6 +59,7 @@ public:
 
       //Calculate the cycle time
       timeBetweenCycles = (double)(start_ticks - prev_start_ticks) / frequency_hz;
+      timeBetweenCyclesNs = timeBetweenCycles * 1000000000;
 
       std::cout << std::fixed << std::setprecision(9) << std::showpoint;
       std::cout << "CycleTime=" << timeBetweenCycles << "[s]" << std::endl;
@@ -72,7 +76,7 @@ public:
       std::cout << "PID: " << pid.pid_toString() << " Signal=" << signal <<
 	" Output:" << pid.pid_control(signal) << std::endl << std::endl;
       /**************End-EXECUTE-USER-FUNCTIONS******************************/
-    
+      
       // Get the ending counter value
       end_ticks = get_arm64_virtual_timer();
     
@@ -81,8 +85,8 @@ public:
     
       // Convert ticks to [ns]
       elapsed_ns = ((double)elapsed_ticks / frequency_hz) * 1000000000;
-      
-      sleep_ts.tv_nsec = cycleTimeNs - elapsed_ns - ((double)(get_arm64_virtual_timer() - end_ticks)/frequency_hz)*1000000000 - 2000; //3000; is an observed fudge factor
+
+      sleep_ts.tv_nsec = cycleTimeNs - elapsed_ns /*- ((double)(get_arm64_virtual_timer() - end_ticks)/frequency_hz)*1000000000*/ - 4000; //is an observed fudge factor
       do
 	{
 	  nanosleep_ret = nanosleep(&sleep_ts, &remaining_ts);
