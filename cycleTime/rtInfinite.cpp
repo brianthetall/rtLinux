@@ -46,7 +46,9 @@ public:
 
     double fudge=0.0;
     int64_t fudgeInt=0;
-    Pid cycleTimeFudgePid(0.4, 0.00000000005, 0);
+    Pid cycleTimeFudgePid(0.4, static_cast<double>(0.14), 0);
+    cycleTimeFudgePid.setSetpoint(cycleTimeSec);
+    
     Pid pid(1.0, 0.0, 0.0); //Kp,Ki,Kd
     std::shared_ptr<FunctionGenerator>generator = std::make_shared<Sine>(0.10, 140, 0.0, 1.0/cycleTimeSec, 0); //Waveform Configuration:
   
@@ -82,7 +84,6 @@ public:
       //	" Output:" << pid.pid_control(signal) << std::endl << std::endl;
       if(!virgin)
 	{
-	  cycleTimeFudgePid.setSetpoint(cycleTimeSec);
 	  fudge = cycleTimeFudgePid.pid_control( timeBetweenCycles );
 	  fudgeInt = virgin ? 0:static_cast<int64_t>(fudge*1000000000); //convert_to_ns
 	}

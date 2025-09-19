@@ -94,6 +94,7 @@ public:
       + this->cfg.Kd * (error - previous_error) / dt;
 
     std::cout<<"Integral="<<this->cfg.Ki * integral * dt <<std::endl;
+    std::cout<<"ki="<<this->cfg.Ki<<" integral="<<integral<<" dt="<<dt<<std::endl;
     std::cout<<"Output="<<this->output<<std::endl;
     
     // Apply output limits to prevent actuator saturation
