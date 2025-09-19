@@ -86,11 +86,15 @@ public:
 
     // Compute the error
     double error = this->cfg.setpoint - current_process_value;
+    std::cout<<"Error="<<error<<std::endl;;
 
     // Calculate control terms
     this->output = this->cfg.Kp * error 
       + this->cfg.Ki * integral * dt 
       + this->cfg.Kd * (error - previous_error) / dt;
+
+    std::cout<<"Integral="<<this->cfg.Ki * integral * dt <<std::endl;
+    std::cout<<"Output="<<this->output<<std::endl;
     
     // Apply output limits to prevent actuator saturation
     if (this->output > 100.0) {
@@ -105,8 +109,8 @@ public:
 
     // Store the current time for the next cycle
     last_update = current_time;
-
-    return output;
+    std::cout<<"Output="<<this->output<<std::endl;
+    return this->output;
   }
 
   std::string pid_toString(void)

@@ -28,6 +28,7 @@ public:
 
   static void *thread_func(void* data)
   {
+    bool virgin = true;
     int cycleTimeNs = *(int*)data * 1000; //convert from [us] to [ns]
     double cycleTimeSec = (double)cycleTimeNs/1000000000;
     int nanosleep_ret = 0;
@@ -43,6 +44,7 @@ public:
     int (*userAdd)(int,int) = &addition; //function pointer to user-function
     sleep_ts.tv_sec=0;
 
+    Pid cycleTimeFudgePid(0.5, 0.0000000001, 0);
     Pid pid(1.0, 0.0, 0.0); //Kp,Ki,Kd
     std::shared_ptr<FunctionGenerator>generator = std::make_shared<Sine>(0.10, 140, 0.0, 1.0/cycleTimeSec, 0); //Waveform Configuration:
   
@@ -62,6 +64,7 @@ public:
       timeBetweenCyclesNs = timeBetweenCycles * 1000000000;
 
       std::cout << std::fixed << std::setprecision(9) << std::showpoint;
+      std::cout << "CycleTime:"<<cycleTimeSec<<"[s]"<<std::endl;
       std::cout << "CycleTime=" << timeBetweenCycles << "[s]" << std::endl;
       std::cout << "Elapsed [ns]=" << elapsed_ns << std::endl << "SleepTime [ns]=" << cycleTimeNs - (elapsed_ns) << std::endl;
 
@@ -72,9 +75,15 @@ public:
 
       /**************EXECUTE-USER-FUNCTIONS**********************************/
       //printf("UserAdd 60+9=%d\n",userAdd(60,9));
-      double signal = generator->next();
-      std::cout << "PID: " << pid.pid_toString() << " Signal=" << signal <<
-	" Output:" << pid.pid_control(signal) << std::endl << std::endl;
+      //      double signal = generator->next();
+      //      std::cout << "PID: " << pid.pid_toString() << " Signal=" << signal <<
+      //	" Output:" << pid.pid_control(signal) << std::endl << std::endl;
+
+      cycleTimeFudgePid.setSetpoint(cycleTimeSec);
+      double fudge = cycleTimeFudgePid.pid_control( timeBetweenCycles );
+      int64_t fudgeInt = virgin ? 0:static_cast<int64_t>(fudge*1000000000); //convert_to_ns
+      virgin = false;
+      std::cout<<"PID_Fudge="<<fudgeInt<<std::endl<<std::endl;
       /**************End-EXECUTE-USER-FUNCTIONS******************************/
       
       // Get the ending counter value
@@ -86,7 +95,7 @@ public:
       // Convert ticks to [ns]
       elapsed_ns = ((double)elapsed_ticks / frequency_hz) * 1000000000;
 
-      sleep_ts.tv_nsec = cycleTimeNs - elapsed_ns /*- ((double)(get_arm64_virtual_timer() - end_ticks)/frequency_hz)*1000000000*/ - 4000; //is an observed fudge factor
+      sleep_ts.tv_nsec = cycleTimeNs - elapsed_ns /*- ((double)(get_arm64_virtual_timer() - end_ticks)/frequency_hz)*1000000000*/ + fudgeInt; //is an observed fudge factor
       do
 	{
 	  nanosleep_ret = nanosleep(&sleep_ts, &remaining_ts);
