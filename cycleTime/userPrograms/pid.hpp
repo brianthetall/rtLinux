@@ -9,9 +9,9 @@
 class Pid
 {
 private:
-  const double maxGainAdjustment = 0.0001;
-  const double maxKp = 0.7;
-  const double maxKi = 0.7;
+  const double maxGainAdjustment = 0.001;
+  const double maxKp = 0.9;
+  const double maxKi = 50.0;
   const double maxKd = 0.0000003;
   double error, previous_error;
   double output; //PID output [-100,100]
@@ -36,46 +36,48 @@ private:
     static bool inOscillation = false;
 
     // Detect oscillations (simplified example)
-    double currentErrorSign = this->error > 0 ? 1 : -1;
-    double previousErrorSign = this->previous_error > 0 ? 1 : -1;
+    int currentErrorSign = this->error > 0 ? 1 : -1;
+    int previousErrorSign = this->previous_error > 0 ? 1 : -1;
 
     if (currentErrorSign != previousErrorSign)
       {
+	std::cout<<"OSC: currentError="<<this->error<<", PrevError="<<this->previous_error<<std::endl;
 	consecutiveOscillations++;
 	inOscillation = true;
       }
     else
       {
+	std::cout<<"CLEAR of OSC"<<std::endl;
 	consecutiveOscillations = 0;
 	inOscillation = false;
       }
 
     // Adjust Kp based on oscillation detection
-    if (inOscillation && consecutiveOscillations > 10)
+    if (inOscillation && consecutiveOscillations > 3)
       {
 	// Reduce Kp to dampen oscillations
-	cfg.Kp -= maxGainAdjustment * 10;
-	std::cout<<"Kp="<<cfg.Kp<<"inOsc and > 3"<<std::endl;
+	cfg.Kp -= maxGainAdjustment * 1;
+	std::cout<<"Kp="<<cfg.Kp<<" Decreased"<<std::endl;
       }
     else
       {
 	// Increase Kp for faster response
 	cfg.Kp += maxGainAdjustment * 1;
-	std::cout<<"Kp="<<cfg.Kp<<"else"<<std::endl;
+	std::cout<<"Kp="<<cfg.Kp<<" Increased"<<std::endl;
       }
 
     // Detect persistent static errors to adjust Ki
-    if (/*std::abs(this->error) > 5.0 &&*/ consecutiveOscillations < 2)
+    if (/*std::abs(this->error) > 5.0 &&*/ consecutiveOscillations < 10)
       {
 	// Increase Ki to reduce static error
 	cfg.Ki += maxGainAdjustment * 0.5;
-	std::cout<<"Ki="<<cfg.Ki<<"consecutiveOsc < 2, "<<consecutiveOscillations<<std::endl;
+	std::cout<<"Ki="<<cfg.Ki<<" consecutiveOsc < 2, "<<consecutiveOscillations<<std::endl;
       }
     else
       {
 	// Decrease Ki to prevent integrator windup
 	cfg.Ki -= maxGainAdjustment * 0.1;
-	std::cout<<"Ki="<<cfg.Ki<<"else, COsc="<<consecutiveOscillations<<std::endl;	
+	std::cout<<"Ki="<<cfg.Ki<<" else, COsc="<<consecutiveOscillations<<std::endl;
       }
 
     // Ensure gains do not go out of reasonable bounds
@@ -83,6 +85,9 @@ private:
     //    if (cfg.Ki < 0.0) cfg.Ki = 0.0;
     if (cfg.Ki > maxKi) cfg.Ki = maxKi;
     if (cfg.Kd > maxKd) cfg.Kd = maxKd;
+
+    //what about minimums?
+    
   }
   
 public:
@@ -176,6 +181,12 @@ public:
       this->output = -100.0;
     }
 
+    
+    if(this->adaptiveTuningEnabled)
+      {
+	this->adjustGains(); //if it isn't broken, fix it till it is!
+      }
+    
     // Update integral and previous_error for next iteration
     this->integral += this->error * dt;
     this->previous_error = this->error;
@@ -183,10 +194,6 @@ public:
     // Store the current time for the next cycle
     last_update = current_time;
 
-    if(this->adaptiveTuningEnabled)
-      {
-	this->adjustGains(); //if it isn't broken, fix it till it is!
-      }
     
     return this->output;
   }
