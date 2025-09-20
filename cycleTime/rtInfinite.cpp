@@ -29,6 +29,8 @@ public:
   static void *thread_func(void* data)
   {
     bool virgin = true;
+    uint count=0;
+    
     int cycleTimeNs = *(int*)data * 1000; //convert from [us] to [ns]
     double cycleTimeSec = (double)cycleTimeNs/1000000000;
     int nanosleep_ret = 0;
@@ -40,13 +42,14 @@ public:
     uint64_t elapsed_ns=0;
     double timeBetweenCycles=0.0;
     uint64_t timeBetweenCyclesNs=0;
+    uint64_t sleepTime=0;
     
     int (*userAdd)(int,int) = &addition; //function pointer to user-function
     sleep_ts.tv_sec=0;
 
     double fudge=0.0;
     int64_t fudgeInt=0;
-    Pid cycleTimeFudgePid(0.4, static_cast<double>(0.14), 0.00000014);
+    Pid cycleTimeFudgePid(0.0, static_cast<double>(0.14), /*0.00000014*/ 0.0, true);
     cycleTimeFudgePid.setSetpoint(cycleTimeSec);
     
     Pid pid(1.0, 0.0, 0.0); //Kp,Ki,Kd
@@ -66,11 +69,11 @@ public:
       //Calculate the cycle time
       timeBetweenCycles = (double)(start_ticks - prev_start_ticks) / frequency_hz;
       timeBetweenCyclesNs = timeBetweenCycles * 1000000000;
-
+      
       std::cout << std::fixed << std::setprecision(9) << std::showpoint;
       std::cout << "CycleTime:"<<cycleTimeSec<<"[s]"<<std::endl;
       std::cout << "CycleTime=" << timeBetweenCycles << "[s]" << std::endl;
-      std::cout << "Elapsed [ns]=" << elapsed_ns << std::endl << "SleepTime [ns]=" << cycleTimeNs - (elapsed_ns) << std::endl;
+      std::cout << "Elapsed [ns]=" << elapsed_ns << std::endl << "SleepTime [ns]=" << sleepTime << std::endl;
 
       prev_start_ticks=start_ticks;
       remaining_ts.tv_sec=0;
@@ -80,14 +83,16 @@ public:
       /**************EXECUTE-USER-FUNCTIONS**********************************/
       //printf("UserAdd 60+9=%d\n",userAdd(60,9));
       //      double signal = generator->next();
-      //      std::cout << "PID: " << pid.pid_toString() << " Signal=" << signal <<
+      //      std::cout << "PID: " << pid.toString() << " Signal=" << signal <<
       //	" Output:" << pid.pid_control(signal) << std::endl << std::endl;
-      if(!virgin)
+      if(!virgin && count>3)
 	{
 	  fudge = cycleTimeFudgePid.pid_control( timeBetweenCycles );
 	  fudgeInt = virgin ? 0:static_cast<int64_t>(fudge*1000000000); //convert_to_ns
+	  //	  exit(100);
 	}
-      virgin = false;
+      virgin = false; count++;
+      std::cout<<cycleTimeFudgePid.toString()<<std::endl;
       std::cout<<"PID_Fudge="<<fudgeInt<<std::endl<<std::endl;
       /**************End-EXECUTE-USER-FUNCTIONS******************************/
       
@@ -99,8 +104,9 @@ public:
     
       // Convert ticks to [ns]
       elapsed_ns = ((double)elapsed_ticks / frequency_hz) * 1000000000;
+      sleepTime = cycleTimeNs - elapsed_ns; //estimated sleep time
 
-      sleep_ts.tv_nsec = cycleTimeNs - elapsed_ns /*- ((double)(get_arm64_virtual_timer() - end_ticks)/frequency_hz)*1000000000*/ + fudgeInt; //is an observed fudge factor
+      sleep_ts.tv_nsec = sleepTime - fudgeInt > 0 ? sleepTime - fudgeInt : sleepTime; //is an observed fudge factor
       do
 	{
 	  nanosleep_ret = nanosleep(&sleep_ts, &remaining_ts);
