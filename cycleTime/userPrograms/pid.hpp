@@ -10,7 +10,7 @@ class Pid
 {
 private:
   const double maxGainAdjustment = 0.001;
-  const double maxKp = 0.9;
+  const double maxKp = 1.0;
   const double maxKi = 50.0;
   const double maxKd = 0.0000003;
   double error, previous_error;
@@ -53,25 +53,30 @@ private:
       }
 
     // Adjust Kp based on oscillation detection
-    if (inOscillation && consecutiveOscillations > 3)
+    if (inOscillation && consecutiveOscillations > 30 and std::fabs(this->error) > 0.000001000)
       {
 	// Reduce Kp to dampen oscillations
-	cfg.Kp -= maxGainAdjustment * 1;
+	//cfg.Kp -= maxGainAdjustment * 10;
+	cfg.Kp *= 0.6;
 	std::cout<<"Kp="<<cfg.Kp<<" Decreased"<<std::endl;
 
+	
 	// Decrease Ki to prevent integrator windup
-	cfg.Ki -= maxGainAdjustment * 10;
+	//	cfg.Ki -= maxGainAdjustment * 10;
+	//	cfg.Ki *= 0.8;
+	this->integral *= 0.8;
 	std::cout<<"Ki="<<cfg.Ki<<" else, COsc="<<consecutiveOscillations<<std::endl;
-
+	
+	
       }
-    else if( std::abs(this->error) > 0.000001000 )
+    else if( std::fabs(this->error) > 0.000002500 && !inOscillation)
       {
 	// Increase Kp for faster response
-	cfg.Kp += maxGainAdjustment * 1;
+	cfg.Kp += maxGainAdjustment * 0.01;
 	std::cout<<"Kp="<<cfg.Kp<<" Increased"<<std::endl;
 
 	// Increase Ki to reduce static error
-	cfg.Ki += maxGainAdjustment * 1;
+	cfg.Ki += maxGainAdjustment * 0.001;
 	std::cout<<"Ki="<<cfg.Ki<<" consecutiveOsc < 2, "<<consecutiveOscillations<<std::endl;
       }
 
