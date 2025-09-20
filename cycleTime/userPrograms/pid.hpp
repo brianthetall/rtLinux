@@ -58,19 +58,29 @@ private:
 	// Reduce Kp to dampen oscillations
 	cfg.Kp -= maxGainAdjustment * 1;
 	std::cout<<"Kp="<<cfg.Kp<<" Decreased"<<std::endl;
+
+	// Decrease Ki to prevent integrator windup
+	cfg.Ki -= maxGainAdjustment * 10;
+	std::cout<<"Ki="<<cfg.Ki<<" else, COsc="<<consecutiveOscillations<<std::endl;
+
       }
-    else
+    else if( std::abs(this->error) > 0.000001000 )
       {
 	// Increase Kp for faster response
 	cfg.Kp += maxGainAdjustment * 1;
 	std::cout<<"Kp="<<cfg.Kp<<" Increased"<<std::endl;
+
+	// Increase Ki to reduce static error
+	cfg.Ki += maxGainAdjustment * 1;
+	std::cout<<"Ki="<<cfg.Ki<<" consecutiveOsc < 2, "<<consecutiveOscillations<<std::endl;
       }
 
+    /*
     // Detect persistent static errors to adjust Ki
-    if (/*std::abs(this->error) > 5.0 &&*/ consecutiveOscillations < 10)
+    if (std::abs(this->error) > 5.0 && consecutiveOscillations < 10)
       {
 	// Increase Ki to reduce static error
-	cfg.Ki += maxGainAdjustment * 0.5;
+	cfg.Ki += maxGainAdjustment * 10.0;
 	std::cout<<"Ki="<<cfg.Ki<<" consecutiveOsc < 2, "<<consecutiveOscillations<<std::endl;
       }
     else
@@ -79,7 +89,8 @@ private:
 	cfg.Ki -= maxGainAdjustment * 0.1;
 	std::cout<<"Ki="<<cfg.Ki<<" else, COsc="<<consecutiveOscillations<<std::endl;
       }
-
+*/
+      
     // Ensure gains do not go out of reasonable bounds
     if (cfg.Kp > maxKp) cfg.Kp = maxKp;
     //    if (cfg.Ki < 0.0) cfg.Ki = 0.0;
