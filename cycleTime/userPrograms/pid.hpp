@@ -11,7 +11,7 @@ class Pid
 private:
   const double maxGainAdjustment = 0.0001;
   const double maxKp = 0.7;
-  const double maxKi = 0.1;
+  const double maxKi = 0.7;
   const double maxKd = 0.0000003;
   double error, previous_error;
   double output; //PID output [-100,100]
