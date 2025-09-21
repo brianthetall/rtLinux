@@ -5,12 +5,13 @@
 
 class PidAdaptive : public Pid
 {
-private:
+protected:
   const double maxGainAdjustment = 0.001;
   const double maxKp = 1.0;
   const double maxKi = 50.0;
   const double maxKd = 0.0000003;
 
+private:
   /*
     Adaptive PID Control
     Adjust gains as needed as underlying systems change

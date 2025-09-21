@@ -4,7 +4,8 @@
 #include "userPrograms/sine.hpp" //Waveform Generator
 #include "userPrograms/ramp.hpp" //Waveform Generator
 #include "userPrograms/square.hpp" //Waveform Generator
-#include "userPrograms/pid.hpp" //control PID loop
+#include "userPrograms/pid.hpp" //PID loop
+#include "userPrograms/pidAdaptive.hpp" //PID Adaptive loop
 #include "userPrograms/print.h" //user program
 #include <limits.h>
 #include <pthread.h>
@@ -49,8 +50,8 @@ public:
 
     double fudge=0.0;
     int64_t fudgeInt=0;
-    Pid cycleTimeFudgePid(0.7, static_cast<double>(25.14), /*0.00000014*/ 0, true);
-    cycleTimeFudgePid.setSetpoint(cycleTimeSec);
+    std::shared_ptr<PidAbstract>cycleTimeFudgePid = std::make_shared<PidAdaptive>(0.7, static_cast<double>(25.14), /*0.00000014*/ 0);
+    cycleTimeFudgePid->setSetpoint(cycleTimeSec);
     
     Pid pid(1.0, 0.0, 0.0); //Kp,Ki,Kd
     std::shared_ptr<FunctionGenerator>generator = std::make_shared<Sine>(0.10, 140, 0.0, 1.0/cycleTimeSec, 0); //Waveform Configuration:
@@ -87,12 +88,12 @@ public:
       //	" Output:" << pid.pid_control(signal) << std::endl << std::endl;
       if(!virgin && count>3)
 	{
-	  fudge = cycleTimeFudgePid.pid_control( timeBetweenCycles );
+	  fudge = cycleTimeFudgePid->pid_control( timeBetweenCycles );
 	  fudgeInt = virgin ? 0:static_cast<int64_t>(fudge*1000000000); //convert_to_ns
 	  //	  exit(100);
 	}
       virgin = false; count++;
-      std::cout<<cycleTimeFudgePid.toString()<<std::endl;
+      std::cout<<cycleTimeFudgePid->toString()<<std::endl;
       std::cout<<"PID_Fudge="<<fudgeInt<<std::endl<<std::endl;
       /**************End-EXECUTE-USER-FUNCTIONS******************************/
       

@@ -8,7 +8,7 @@
 
 class PidAbstract
 {
-private:
+protected:
 
   double error, previous_error;
   double output; //PID output [-100,100]
@@ -26,9 +26,14 @@ public:
   PidConfig cfg;
 
   PidAbstract() = default;
-  PidAbstract(double Kp, double Ki, double Kd):cfg.Kp(Kp), cfg.Ki(Ki), cfg.Kd(Kd){}
+  PidAbstract(double Kp, double Ki, double Kd)
+  {
+    cfg.Kp = Kp;
+    cfg.Ki = Ki;
+    cfg.Kd = Kd;
+  }
   virtual ~PidAbstract() = default;
-  virtual PidConfig getCfg(void) = 0;
+  virtual const PidConfig getCfg(void) = 0;
   virtual void setSetpoint(double setpoint) = 0;
   virtual void setKp(double Kp) = 0;
   virtual void setKi(double Ki) = 0;

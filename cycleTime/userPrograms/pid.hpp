@@ -15,24 +15,16 @@ public:
     cfg.Ki = 0.0;
     cfg.Kd = 0.0;
     output = 0.0;
-    adaptiveTuningEnabled = false;
     integral = error = previous_error = 0.0;
   }
 
-  Pid(double Kp, double Ki, double Kd)
+  Pid(double Kp, double Ki, double Kd):PidAbstract(Kp,Ki,Kd)
   {
     cfg.setpoint = 0.0;
-    cfg.Kp = Kp;
-    cfg.Ki = Ki;
-    cfg.Kd = Kd;
     output = 0.0;
-    adaptiveTuningEnabled = false;
     integral = error = previous_error = 0.0;
   }
 
-  Pid(double Kp, double Ki, double Kd):Pid(Kp,Ki,Kd)
-  {}
-  
   virtual const PidConfig getCfg(void)
   {
     return this->cfg;
