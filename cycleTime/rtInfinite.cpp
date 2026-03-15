@@ -1,6 +1,11 @@
 #define _POSIX_C_SOURCE 200809L
 
+#ifdef __X64__
+#include "x64Timer.h"
+#else
 #include "armTimer.h"
+#endif
+
 #include "userPrograms/sine.hpp" //Waveform Generator
 #include "userPrograms/ramp.hpp" //Waveform Generator
 #include "userPrograms/square.hpp" //Waveform Generator
@@ -58,10 +63,10 @@ public:
   
     while (1) {
 
-      start_ticks = get_arm64_virtual_timer(); // Get the starting counter value
+      start_ticks = get_virtual_timer(); // Get the starting counter value
 
       // Get the timer frequency
-      frequency_hz = get_arm64_timer_frequency();
+      frequency_hz = get_timer_frequency();
       if (frequency_hz == 0) {
         fprintf(stderr, "Could not get ARM Generic Timer frequency.\n");
 	exit(1); //Show stopper!
@@ -98,7 +103,7 @@ public:
       /**************End-EXECUTE-USER-FUNCTIONS******************************/
       
       // Get the ending counter value
-      end_ticks = get_arm64_virtual_timer();
+      end_ticks = get_virtual_timer();
     
       // Calculate the elapsed ticks
       elapsed_ticks = end_ticks - start_ticks;
