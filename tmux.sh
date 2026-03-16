@@ -1,44 +1,72 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# Define the name for your tmux session
-session_name="RT-Processes"
+# tmux.sh – launch an arbitrary number of RT processes
+#  (program-path <cycle-time1> [<cycle-time2> ...])
 
-# Check if the session already exists and re-attach to it if so
-tmux has-session -t $session_name 2>/dev/null
-if [ "$?" -eq 0 ]; then
-  echo "Session $session_name already exists. Attaching to it."
-  tmux attach-session -t $session_name
-  exit 0
+set -euo pipefail
+
+# -------------------------------------------------------------------
+# 1. Basic argument handling
+# -------------------------------------------------------------------
+if [[ $# -lt 2 ]]; then
+  echo "Usage: $0 <program-path> <cycle-time1> [<cycle-time2> ...]"
+  exit 1
 fi
 
-# Create a new detached tmux session with a single window
-tmux new-session -d -s $session_name -n "dev-env"
+PROGRAM_PATH="$1"        # <program-path>
+shift
 
-# Split the window into multiple panes
-# Split the initial pane vertically into two panes (0 and 1)
-tmux split-window -v -t "$session_name:dev-env"
+# -------------------------------------------------------------------
+# 2. Validate cycle‑times
+# -------------------------------------------------------------------
+for ct in "$@"; do
+  # must be a decimal integer
+  if ! [[ "$ct" =~ ^[0-9]+$ ]]; then
+    echo "Error: cycle‑time '$ct' is not a positive integer."
+    exit 1
+  fi
 
-# Split the first pane (pane 0) horizontally into two panes (0 and 2)
-tmux split-window -h -t "$session_name:dev-env.0"
+  # must be at least 150 µs
+  if (( ct < 150 )); then
+    echo "Error: cycle‑time $ct µs is below the minimum of 150 µs."
+    exit 1
+  fi
+done
 
-# Split the second pane (pane 1) horizontally into two panes (1 and 3)
-tmux split-window -h -t "$session_name:dev-env.1"
+# -------------------------------------------------------------------
+# 3. Session name (same as the original script)
+# -------------------------------------------------------------------
+SESSION="RT-Processes"
 
-# Select a specific layout to arrange the panes neatly
-tmux select-layout -t "$session_name:dev-env" tiled
+# If the session already exists, re‑attach; otherwise create it.
+if ! tmux has-session -t "$SESSION" 2>/dev/null; then
+  tmux new-session -d -s "$SESSION" -n main
+fi
 
-# Send a different command to each pane (optional)
-# Send command to pane 0 (top-left)
-tmux send-keys -t "$session_name:dev-env.0" './gogoGaget.sh 99 bin/rtInfinite 200' C-m
+# -------------------------------------------------------------------
+# 4. Start processes – one pane per cycle‑time
+# -------------------------------------------------------------------
+#  Priority is hard‑coded to 99 as in the original `gogoGaget.sh`
+#  call [2].
+priority=99
 
-# Send command to pane 1 (top-right)
-tmux send-keys -t "$session_name:dev-env.1" './gogoGaget.sh 98 bin/rtInfinite 333' C-m
+# Launch the first instance in the window that just got created.
+first_cycleTime="$1"
+tmux send-keys -t "$SESSION" "./gogoGaget.sh $priority $PROGRAM_PATH $first_cycleTime" C-m
+((priority--))   # next pane gets one priority lower
 
-# Send command to pane 2 (bottom-left)
-tmux send-keys -t "$session_name:dev-env.2" './gogoGaget.sh 97 bin/rtInfinite 500' C-m
+# For every remaining cycle‑time, split the window vertically
+# and launch another instance.
+shift
+while (( $# > 0 )); do
+  cycleTime="$1"
+  tmux split-window -t "$SESSION" -v   # new pane below the previous one
+  tmux send-keys -t "$SESSION" "./gogoGaget.sh $priority $PROGRAM_PATH $cycleTime" C-m
+  ((priority--))   # next pane gets one priority lower
+  shift
+done
 
-# Send command to pane 3 (bottom-right)
-tmux send-keys -t "$session_name:dev-env.3" './gogoGaget.sh 96 bin/rtInfinite 1700' C-m
-
-# Attach to the tmux session
-tmux attach-session -t $session_name
+# -------------------------------------------------------------------
+# 4. Bring the user into the session
+# -------------------------------------------------------------------
+tmux attach-session -t "$SESSION"
