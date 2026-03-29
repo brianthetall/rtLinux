@@ -3,7 +3,7 @@
 set -o errexit
 set -o nounset
 
-source ${RT}/scripts/env.sh
+source /home/user/repos/rtLinux/scripts/env.sh
 source ${SCRIPTS}/rootBumper.sh
 
 #https://documentation.ubuntu.com/real-time/latest/how-to/isolate-workload-cpusets/
