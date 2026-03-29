@@ -1,10 +1,10 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 set -o errexit
 set -o nounset
 
-source /home/user/repos/rtLinux/scripts/env.sh
-source ${SCRIPTS}/rootBumper.sh
+. ${HOME}/repos/rtLinux/scripts/env.sh
+. ${SCRIPTS}/rootBumper.sh
 
 #https://documentation.ubuntu.com/real-time/latest/how-to/isolate-workload-cpusets/
 doas systemctl set-property --runtime custom-workload.slice AllowedCPUs=0
